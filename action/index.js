@@ -8791,6 +8791,7 @@ class FtpService {
             const elements = yield execute(callback => this.client.list(callback));
             if (elements != null) {
                 const dirs = [];
+                core.info(`Elements: ${JSON.stringify(elements)}`);
                 for (const element of elements) {
                     if ((0, io_helper_1.isBlank)(name) || element.name === name) {
                         if ((element === null || element === void 0 ? void 0 : element.type) === 'd') {
@@ -8811,9 +8812,14 @@ class FtpService {
                         }
                     }
                 }
-                if ((0, io_helper_1.isNotBlank)(name) && dirs.length === 0)
+                if ((0, io_helper_1.isNotBlank)(name) && (dirs.length === 0 && result === 0))
                     throw new Error(`Directory or file ${name} does not exist.`);
+                core.info(`Directories: ${JSON.stringify(dirs)}`);
                 for (const dir of dirs) {
+                    if (dir === "." || dir === "..") {
+                        core.info("Skipping dot directories");
+                        continue;
+                    }
                     yield execute(callback => this.client.cwd(dir, callback));
                     const directory = this._join(dest, (0, io_helper_1.isBlank)(name) || (0, io_helper_1.isBlank)(override) ? dir : override);
                     if (fs.existsSync(directory)) {

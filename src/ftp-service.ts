@@ -181,6 +181,7 @@ export class FtpService {
         const elements: Client.ListingElement[] | undefined = await execute(callback => this.client.list(callback));
         if (elements != null) {
             const dirs: string[] = [];
+            core.info(`Elements: ${JSON.stringify(elements)}`);
             for (const element of elements) {
                 if (isBlank(name) || element.name === name) {
                     if (element?.type === 'd') {
@@ -200,9 +201,15 @@ export class FtpService {
                     }
                 }
             }
-            if (isNotBlank(name) && dirs.length === 0)
+            if (isNotBlank(name) && (dirs.length === 0 && result === 0))
                 throw new Error(`Directory or file ${name} does not exist.`)
+
+            core.info(`Directories: ${JSON.stringify(dirs)}`);
             for (const dir of dirs) {
+                if (dir === "." || dir === "..") {
+                    core.info("Skipping dot directories")
+                    continue;
+                }
                 await execute(callback => this.client.cwd(dir, callback));
                 const directory = this._join(dest, isBlank(name) || isBlank(override) ? dir : override!);
                 if (fs.existsSync(directory)) {
